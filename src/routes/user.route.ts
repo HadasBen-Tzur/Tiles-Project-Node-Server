@@ -6,6 +6,7 @@ import {
   getAllUsers,
   getUserById,
   updateUser,
+  updateUsersService,
 } from "../controllers/user.controllers";
 import { getMiddlewareJWT } from "../middlewars/auth.middleware";
 import { collectionsDB } from "../util/database";
@@ -20,5 +21,9 @@ userRout.use((_req, _res, next) => {
 });
 
 userRout.route("/:id").get(getUserById).put(updateUser).delete(deleteUser);
-userRout.route("/").get(getMiddlewareJWT, getAllUsers).post(createUser);
+userRout
+  .route("/")
+  .get(getMiddlewareJWT, getAllUsers)
+  .put( updateUsersService)
+  .post(createUser);
 userRout.route("/login").post(CreatJWT);

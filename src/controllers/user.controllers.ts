@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 import { ObjectId, WithId } from "mongodb";
-import { User } from "../models/user.model";
+import { Roles, User } from "../models/user.model";
 import { collectionsDB } from "../util/database";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
@@ -17,6 +17,14 @@ export const getAllUsers: RequestHandler = async (req, res) => {
 export const createUser: RequestHandler = async (req, res) => {
   console.log(req.body);
   const user: User | undefined = req.body;
+
+  const existingUser = await collectionsDB.users?.findOne({
+    email: user?.email,
+  });
+  if (existingUser) {
+    res.status(400).send("User exist");
+    return;
+  }
   const salt = await bcrypt.genSalt(10);
   req.body.password = await bcrypt.hash(req.body.password, salt);
   if (!user) {
@@ -25,6 +33,7 @@ export const createUser: RequestHandler = async (req, res) => {
   }
   const result = await collectionsDB.users?.insertOne({
     ...user,
+    role: Roles.Viewer,
   });
   if (!result) {
     res.status(500).send("Not create user 👎");
@@ -102,12 +111,14 @@ export const CreatJWT: RequestHandler = async (req, res) => {
     return;
   }
   let token;
+  console.log(existingUser);
   try {
     token = jwt.sign(
       {
         userId: existingUser._id,
         email: existingUser.email,
         userName: existingUser.userName,
+        role: existingUser.role,
       },
       process.env.SECRET_KEY!,
       { expiresIn: "1h" }
@@ -121,4 +132,21 @@ export const CreatJWT: RequestHandler = async (req, res) => {
       token: token,
     },
   });
+};
+// updateUsers
+export const updateUsersService: RequestHandler<ObjectId> = async (
+  req,
+  res
+) => {
+  const updateRoleUsers = req.body.updateRoleUsers as User[];
+  try {
+    const updated = updateRoleUsers.map((user) => ({
+      updateOne: {
+        filter: { _id: new ObjectId(user._id) },
+        update: { $set: { role: user.role } },
+      },
+    }));
+
+    collectionsDB.users?.bulkWrite([...updated]);
+  } catch (error) {}
 };

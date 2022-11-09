@@ -17,11 +17,8 @@ export const updateTilesService: RequestHandler<ObjectId> = async (
   res
 ) => {
   const tilesAdded = req.body.tilesAdded as Tile[];
-  console.log(tilesAdded);
   const tilesRemoved = req.body.tilesRemoved as ObjectId[];
-  console.log(tilesRemoved);
   const tilesUpdated = req.body.tilesUpdated as Tile[];
-  console.log(tilesUpdated);
   try {
     const added = tilesAdded.map((tile) => ({
       insertOne: {

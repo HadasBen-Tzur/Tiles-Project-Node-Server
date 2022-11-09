@@ -14,11 +14,8 @@ exports.getAllTiles = getAllTiles;
 //Bulk save Tiles
 const updateTilesService = async (req, res) => {
     const tilesAdded = req.body.tilesAdded;
-    console.log(tilesAdded);
     const tilesRemoved = req.body.tilesRemoved;
-    console.log(tilesRemoved);
     const tilesUpdated = req.body.tilesUpdated;
-    console.log(tilesUpdated);
     try {
         const added = tilesAdded.map((tile) => ({
             insertOne: {

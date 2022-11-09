@@ -16,5 +16,9 @@ exports.userRout.use((_req, _res, next) => {
     next();
 });
 exports.userRout.route("/:id").get(user_controllers_1.getUserById).put(user_controllers_1.updateUser).delete(user_controllers_1.deleteUser);
-exports.userRout.route("/").get(auth_middleware_1.getMiddlewareJWT, user_controllers_1.getAllUsers).post(user_controllers_1.createUser);
+exports.userRout
+    .route("/")
+    .get(auth_middleware_1.getMiddlewareJWT, user_controllers_1.getAllUsers)
+    .put(user_controllers_1.updateUsersService)
+    .post(user_controllers_1.createUser);
 exports.userRout.route("/login").post(user_controllers_1.CreatJWT);

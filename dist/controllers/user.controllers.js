@@ -3,8 +3,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreatJWT = exports.deleteUser = exports.updateUser = exports.getUserById = exports.createUser = exports.getAllUsers = void 0;
+exports.updateUsersService = exports.CreatJWT = exports.deleteUser = exports.updateUser = exports.getUserById = exports.createUser = exports.getAllUsers = void 0;
 const mongodb_1 = require("mongodb");
+const user_model_1 = require("../models/user.model");
 const database_1 = require("../util/database");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
@@ -20,6 +21,13 @@ exports.getAllUsers = getAllUsers;
 const createUser = async (req, res) => {
     console.log(req.body);
     const user = req.body;
+    const existingUser = await database_1.collectionsDB.users?.findOne({
+        email: user?.email,
+    });
+    if (existingUser) {
+        res.status(400).send("User exist");
+        return;
+    }
     const salt = await bcrypt_1.default.genSalt(10);
     req.body.password = await bcrypt_1.default.hash(req.body.password, salt);
     if (!user) {
@@ -28,6 +36,7 @@ const createUser = async (req, res) => {
     }
     const result = await database_1.collectionsDB.users?.insertOne({
         ...user,
+        role: user_model_1.Roles.Viewer,
     });
     if (!result) {
         res.status(500).send("Not create user 👎");
@@ -107,11 +116,13 @@ const CreatJWT = async (req, res) => {
         return;
     }
     let token;
+    console.log(existingUser);
     try {
         token = jsonwebtoken_1.default.sign({
             userId: existingUser._id,
             email: existingUser.email,
             userName: existingUser.userName,
+            role: existingUser.role,
         }, process.env.SECRET_KEY, { expiresIn: "1h" });
     }
     catch (err) {
@@ -125,3 +136,18 @@ const CreatJWT = async (req, res) => {
     });
 };
 exports.CreatJWT = CreatJWT;
+// updateUsers
+const updateUsersService = async (req, res) => {
+    const updateRoleUsers = req.body.updateRoleUsers;
+    try {
+        const updated = updateRoleUsers.map((user) => ({
+            updateOne: {
+                filter: { _id: new mongodb_1.ObjectId(user._id) },
+                update: { $set: { role: user.role } },
+            },
+        }));
+        database_1.collectionsDB.users?.bulkWrite([...updated]);
+    }
+    catch (error) { }
+};
+exports.updateUsersService = updateUsersService;
